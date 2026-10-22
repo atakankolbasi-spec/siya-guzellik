@@ -131,6 +131,13 @@ grant select, insert, update, delete on public.musteriler, public.ziyaretler, pu
 grant select, update on public.profiller to authenticated;
 revoke all on all tables in schema public from anon;
 
+-- Kullanıcı yönetimi fonksiyonu (servis rolü) tabloları okuyup yazabilmeli
+grant usage on schema public to service_role;
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
+grant all on all functions in schema public to service_role;
+alter default privileges in schema public grant all on tables to service_role;
+
 -- 6) Anlık güncelleme (Realtime) ------------------------------------------
 do $$
 declare t text;
