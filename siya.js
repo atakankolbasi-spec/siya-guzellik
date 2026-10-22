@@ -74,7 +74,7 @@
   var durum = {
     m: { ara: '', filtre: 'hepsi', sirala: 'ad', limit: 50 },
     z: { donem: 'bugun', bas: '', bit: '', odeme: '', uzman: '', ara: '' },
-    r: { donem: 'ay', bas: '', bit: '' }, fa: '', sonSayfa: '', rn: { gun: bugun() }, st: { ara: '', filtre: 'hepsi' }
+    r: { donem: 'ay', bas: '', bit: '' }, fa: '', sonSayfa: '', pg: bugun(), rn: { gun: bugun() }, st: { ara: '', filtre: 'hepsi' }
   };
   var $ = function (s) { return document.querySelector(s); };
   var modal = $('#modal');
@@ -407,25 +407,41 @@
   }
   function bos(yazi) { return '<div class="empty">' + ik('tik') + esc(yazi) + '</div>'; }
 
-  /* ---------- PANO ---------- */
+  function ziyaretBandi(t, l) {
+    var adm = yonetici(), top = l.reduce(function (a, x) { return a + (Number(x.z.tutar) || 0); }, 0);
+    var odKls = { 'Nakit': 'nakit', 'Kredi Kartı': 'kart', 'Havale / EFT': 'havale' };
+    return '<div class="zband"><div class="zb-head"><span class="zb-dot"></span><b>' + uzunTarih(t) + '</b><span class="zb-pill">' + l.length + ' ZİYARET</span>' +
+      (t === bugun() ? '<span class="zb-pill hl">BUGÜN</span>' : '') + (adm ? '<span class="zb-top">' + para(top) + '</span>' : '') + '</div>' +
+      (l.length ? '<div class="zb-cols"><span>#</span><span>ÖDEME</span><span>MÜŞTERİ</span><span>İŞLEMLER</span><span>UZMAN</span><span class="r">TUTAR</span><span></span></div>' +
+      l.map(function (x, i) {
+        return '<div class="zb-row" data-act="ac" data-id="' + esc(x.m.id) + '"><span class="zb-no">' + p2(i + 1) + '</span>' +
+          '<span class="zb-od ' + (odKls[x.z.odeme] || 'nakit') + '">' + esc(x.z.odeme || 'Nakit') + '</span>' +
+          '<span class="zb-c"><b>' + esc(x.m.ad) + '</b></span>' +
+          '<span class="zb-isl">' + (x.z.hizmetler || []).map(function (h) { return '<span class="zb-box">' + esc(h) + '</span>'; }).join('') + (x.z.not ? '<small class="znote">' + esc(x.z.not) + '</small>' : '') + '</span>' +
+          '<span class="zb-u">' + esc(x.z.personel || '—') + '</span><span class="zb-t">' + para(x.z.tutar) + '</span>' +
+          '<span class="zb-a"><button class="link" type="button" data-act="z-duzenle" data-id="' + esc(x.m.id) + '" data-z="' + esc(x.z.id) + '">Düzenle</button></span></div>';
+      }).join('') : '<div class="zb-bos">Bu gün için ziyaret kaydı yok.</div>') + '</div>';
+  }
+
   function pano() {
-    var b = bugun(), tum = tumZ(), ay = aralikta(tum, donemAraligi('ay')), gun = aralikta(tum, [b, b]);
+    var b = bugun(), g = durum.pg || b, bugunMu = g === b, tum = tumZ(), ay = aralikta(tum, donemAraligi('ay')), gun = aralikta(tum, [g, g]);
     var oAy = ozetle(ay), oGun = ozetle(gun), adm = yonetici();
     var sa = new Date().getHours(), selam = sa < 12 ? 'Günaydın' : sa < 18 ? 'İyi günler' : 'İyi akşamlar';
     var ilkAd = (oturum.ad || '').trim().split(/\s+/)[0];
     var yakin = db.filter(dogumYakin).sort(function (a, c) { return sonrakiDogum(a.dogum) - sonrakiDogum(c.dogum); });
     var gelmeyen = db.filter(riskli).sort(function (a, c) { return sonZiyaret(a).localeCompare(sonZiyaret(c)); });
-    var rvGun = randevuGun(b).filter(function (r) { return r.durum !== 'iptal'; }), rvBek = rvGun.filter(function (r) { return r.durum === 'bekliyor'; });
+    var rvGun = randevuGun(g).filter(function (r) { return r.durum !== 'iptal'; }), rvBek = rvGun.filter(function (r) { return r.durum === 'bekliyor'; });
     var stat = function (d, e, c) { return '<div class="k-stat"><b>' + d + '</b><i' + (c ? ' style="background:' + c + '"' : '') + '></i><span>' + e + '</span></div>'; };
     var tikStat = function (t, d, e, ipucu, c) {
       return '<button type="button" class="k-stat link" data-act="takip" data-t="' + t + '"><b>' + d + '</b><i style="background:' + c + '"></i><span>' + e + '</span><small>' + esc(ipucu) + '</small></button>';
     };
     var ilkYakin = yakin[0], ilkGel = gelmeyen[0];
     var hero = '<div class="heading k-hero"><div class="k-title"><div class="k-hi">' + selam.toUpperCase() + (ilkAd ? ', ' + esc(ilkAd.toLocaleUpperCase('tr')) : '') + '</div>' +
-      '<h1>Salonun bugünkü durumu</h1><div class="k-date">' + uzunTarih(b).toLocaleUpperCase('tr') + '</div></div>' +
+      '<h1>Salonun bugünkü durumu</h1><div class="k-date">' + uzunTarih(g).toLocaleUpperCase('tr') + '</div>' +
+      '<div class="k-daypick"><button type="button" data-act="pg-gun" data-gun="' + gunEkle(g, -1) + '" aria-label="Önceki gün">‹</button><input type="date" data-in="pg-gun" value="' + g + '" aria-label="Tarih seç"><button type="button" data-act="pg-gun" data-gun="' + gunEkle(g, 1) + '" aria-label="Sonraki gün">›</button>' + (bugunMu ? '' : '<button type="button" class="bg" data-act="pg-gun" data-gun="' + b + '">Bugüne dön</button>') + '</div></div>' +
       '<div class="actions"><button class="btn primary" type="button" data-act="yeni-ziyaret">' + ik('arti') + ' Ziyaret Ekle</button>' +
       '<button class="btn" type="button" data-act="yeni-randevu">Randevu Ekle</button><button class="btn" type="button" data-act="yeni-musteri">Yeni Müşteri</button><button class="btn" type="button" data-act="urun-sat">Ürün Sat</button></div>' +
-      '<div class="k-stats"><span class="k-stats-label">BUGÜN</span>' + stat(oGun.adet, 'ZİYARET') +
+      '<div class="k-stats"><span class="k-stats-label">' + (bugunMu ? 'BUGÜN' : tarihGoster(g)) + '</span>' + stat(oGun.adet, 'ZİYARET') +
       (adm ? stat(para(oGun.ciro), 'CİRO', '#e6b36e') : stat(oAy.adet, 'BU AY ZİYARET', '#e6b36e')) +
       stat(rvBek.length + '<em>/' + rvGun.length + '</em>', 'RANDEVU', '#8fd3c5') + stat(db.length, 'MÜŞTERİ', '#f4a7bb') +
       tikStat('dogum', yakin.length, 'DOĞUM GÜNÜ', ilkYakin ? ilkYakin.ad.split(' ')[0] + ' · ' + (sonrakiDogum(ilkYakin.dogum) === 0 ? 'bugün' : sonrakiDogum(ilkYakin.dogum) + ' gün') : 'önümüzdeki 30 gün', '#c4b5fd') +
@@ -456,22 +472,19 @@
       }).join('') + '</ul>' : bos('Bu ay henüz işlem yok.')) +
       kart('ÖDEME TÜRÜ', 'BU AY', adm ? (oAy.ciro ? halka(['Nakit', 'Kredi Kartı', 'Havale / EFT'].map(function (n) { return { ad: n, d: oAy.odeme[n] || 0, e: para(oAy.odeme[n] || 0) }; }), oAy.adet, 'ZİYARET') : bos('Bu ay henüz ödeme yok.')) : bos('Ödeme özeti yöneticiye açıktır.')) + '</div>';
 
-    var bugunTablo = gun.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Müşteri</th><th>İşlemler</th><th>Uzman</th><th class="r">Tutar</th></tr></thead><tbody>' +
-      gun.map(function (x) {
-        return '<tr data-act="ac" data-id="' + esc(x.m.id) + '"><td><b>' + esc(x.m.ad) + '</b></td><td>' + esc((x.z.hizmetler || []).join(', ')) + '</td><td>' + esc(x.z.personel || '—') + '</td><td class="r"><b>' + para(x.z.tutar) + '</b></td></tr>';
-      }).join('') + '</tbody></table></div>' : bos('Bugün henüz ziyaret kaydı yok. “Ziyaret Ekle” ile başlayın.');
+    var bugunTablo = ziyaretBandi(g, gun.slice().sort(function (x, y) { return (x.z.id < y.z.id) ? -1 : 1; }));
     var rvListe = rvGun.length ? '<ul class="mini">' + rvGun.slice(0, 6).map(function (r) {
       var ds = RDURUM[r.durum] || RDURUM.bekliyor;
       return '<li><button type="button" data-nav="randevular"><span class="rvt">' + esc(r.saat) + '</span><b>' + esc(r.ad) + '</b><small class="rst ' + ds[1] + '">' + ds[0] + '</small></button></li>';
-    }).join('') + '</ul>' : bos('Bugün için randevu yok.');
+    }).join('') + '</ul>' : bos(bugunMu ? 'Bugün için randevu yok.' : 'Bu gün için randevu yok.');
     var azStok = urunler.filter(function (u) { return urunKalan(u) <= 2; }).sort(function (a, c) { return urunKalan(a) - urunKalan(c); });
     var stokListe = azStok.length ? '<ul class="mini">' + azStok.slice(0, 5).map(function (u) {
       var ds = stokDurum(u);
       return '<li><button type="button" data-nav="stok"><span class="kalan ' + ds[1] + '">' + Math.max(0, urunKalan(u)) + '</span><b>' + esc(u.ad) + '</b><small class="rst ' + ds[1] + '">' + ds[0] + '</small></button></li>';
     }).join('') + '</ul>' : bos('Stok seviyeleri yeterli.');
     var alt = '<div class="k-cards two">' +
-      kart('BUGÜNÜN ZİYARETLERİ', gun.length + ' KAYIT', bugunTablo, 'wide') +
-      '<div class="stack">' + kart('BUGÜNÜN RANDEVULARI', '<button class="k-link" type="button" data-nav="randevular">TÜMÜ</button>', rvListe) +
+      kart(bugunMu ? 'BUGÜNÜN ZİYARETLERİ' : 'ZİYARETLER · ' + tarihGoster(g), gun.length + ' KAYIT', bugunTablo, 'wide') +
+      '<div class="stack">' + kart(bugunMu ? 'BUGÜNÜN RANDEVULARI' : 'RANDEVULAR · ' + tarihGoster(g), '<button class="k-link" type="button" data-nav="randevular">TÜMÜ</button>', rvListe) +
       kart('STOK UYARISI', azStok.length ? '<button class="k-link" type="button" data-nav="stok">STOK</button>' : '', stokListe) + '</div></div>';
     return hero + cards + alt;
   }
@@ -585,16 +598,7 @@
     if (!l.length) { kutu.innerHTML = s + '<div class="bos"><div class="big">Bu dönemde ziyaret yok</div>Farklı bir dönem ya da filtre seçin.</div>'; return; }
     var gruplar = {}, sira = [];
     l.forEach(function (x) { if (!gruplar[x.z.tarih]) { gruplar[x.z.tarih] = []; sira.push(x.z.tarih); } gruplar[x.z.tarih].push(x); });
-    kutu.innerHTML = s + sira.map(function (t) {
-      var top = gruplar[t].reduce(function (a, x) { return a + (Number(x.z.tutar) || 0); }, 0);
-      return '<div class="dayblock"><div class="dayhead"><b>' + uzunTarih(t) + (t === bugun() ? ' <span class="tag dogum">Bugün</span>' : '') + '</b><span>' + gruplar[t].length + ' ziyaret' + (adm ? ' · <b>' + para(top) + '</b>' : '') + '</span></div>' +
-        '<div class="tbl-wrap"><table class="tbl click"><tbody>' + gruplar[t].map(function (x) {
-          return '<tr data-act="ac" data-id="' + esc(x.m.id) + '"><td class="c1"><div class="cust"><span class="avatar sm" style="' + renkler(x.m.ad) + '">' + esc(bas(x.m.ad)) + '</span><b>' + esc(x.m.ad) + '</b></div></td>' +
-            '<td>' + (x.z.hizmetler || []).map(function (h) { return '<span class="pill">' + esc(h) + '</span>'; }).join('') + (x.z.not ? '<div class="znote">' + esc(x.z.not) + '</div>' : '') + '</td>' +
-            '<td class="hm">' + esc(x.z.personel || '—') + '</td><td class="hm"><span class="odeme">' + esc(x.z.odeme || '') + '</span></td><td class="r"><b>' + para(x.z.tutar) + '</b></td>' +
-            '<td class="r"><button class="link" type="button" data-act="z-duzenle" data-id="' + esc(x.m.id) + '" data-z="' + esc(x.z.id) + '">Düzenle</button></td></tr>';
-        }).join('') + '</tbody></table></div></div>';
-    }).join('');
+    kutu.innerHTML = s + '<div class="zbands">' + sira.map(function (t) { return ziyaretBandi(t, gruplar[t]); }).join('') + '</div>';
   }
 
   /* ---------- RAPORLAR ---------- */
@@ -781,6 +785,7 @@
     var is = {
       'yeni-musteri': function () { musteriForm(); }, 'yeni-ziyaret': hizliZiyaret,
       'yeni-randevu': function () { randevuForm(null); },
+      'pg-gun': function () { durum.pg = a.getAttribute('data-gun'); render(); },
       'takip': function () { takipPenceresi(a.getAttribute('data-t')); },
       'rv-gun': function () { durum.rn.gun = a.getAttribute('data-gun'); render(); },
       'rv-geldi': function () { randevuGeldi(randevular.filter(function (r) { return r.id === a.getAttribute('data-id'); })[0]); },
@@ -821,6 +826,7 @@
     else if (k === 'z-bas' || k === 'z-bit') { durum.z[k.slice(2)] = v; if (k === 'z-bas' && (!durum.z.bit || durum.z.bit < v)) durum.z.bit = v; ziyaretIcerik(); }
     else if (k === 'r-bas' || k === 'r-bit') { if (e.type === 'change') { durum.r[k.slice(2)] = v; if (k === 'r-bas' && (!durum.r.bit || durum.r.bit < v)) durum.r.bit = v; render(); } }
     else if (k === 'fa-ara') { durum.fa = v; fiyatListe(); }
+    else if (k === 'pg-gun' && e.type === 'change' && v) { durum.pg = v; render(); }
     else if (k === 'rn-gun' && e.type === 'change' && v) { durum.rn.gun = v; render(); }
     else if (k === 'st-ara') { durum.st.ara = v; stokTabloGuncelle(); }
     else if (k.indexOf('ay-') === 0 && e.type === 'change') {
