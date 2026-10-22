@@ -582,7 +582,7 @@ html[data-theme="dark"] .rst.wait{color:#f3cf93}
 .zb-pill{padding:2px 11px;border-radius:99px;background:#ffffff26;border:1px solid #ffffff44;font-size:11px;font-weight:800;letter-spacing:.06em}
 .zb-pill.hl{background:var(--a2);border-color:var(--a2);color:#2d1b24}
 .zb-top{margin-left:auto;font:800 16px var(--head)}
-.zb-cols,.zb-row{display:grid;grid-template-columns:40px 112px minmax(130px,1fr) minmax(200px,2.3fr) minmax(90px,.8fr) 96px 72px;gap:12px;align-items:center;padding:0 16px}
+.zb-cols,.zb-row{display:grid;grid-template-columns:40px 112px minmax(130px,1fr) minmax(200px,2.3fr) minmax(90px,.8fr) 96px 120px;gap:12px;align-items:center;padding:0 16px}
 .zb-cols{padding-top:8px;padding-bottom:8px;background:var(--soft);font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--mut)}
 .zb-cols .r,.zb-t{text-align:right}
 .zb-row{padding-top:var(--dy);padding-bottom:var(--dy);border-top:1px solid var(--line);cursor:pointer;transition:background .15s}
@@ -755,3 +755,6 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 .login .lbox input:-webkit-autofill:focus{
   -webkit-box-shadow:0 0 0 1000px #2a1a20 inset,0 0 0 2px #d4a656,0 0 0 6px #d4a65626!important;
   box-shadow:0 0 0 1000px #2a1a20 inset,0 0 0 2px #d4a656,0 0 0 6px #d4a65626!important}
+
+.zb-a{display:flex;gap:10px;justify-content:flex-end}
+.tbl td .link.d{opacity:.75}.tbl tr:hover .link.d{opacity:1}
