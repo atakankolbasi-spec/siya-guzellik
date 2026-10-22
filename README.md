@@ -5,8 +5,10 @@ Veriler tarayıcıda (localStorage) tutulur; düzenli olarak Ayarlar > Yedekle /
 
 ## Sayfalar
 
-- **Pano:** günün özeti, son 7 gün grafiği, grup / ödeme dağılımı, popüler işlemler, bugünün ziyaretleri, doğum günleri ve uzun süredir gelmeyenler.
+- **Pano:** günün özeti, doğum günü ve gelmeyen müşteriler için üst banttaki tıklanabilir kutular, son 7 gün grafiği, grup / ödeme dağılımı, popüler işlemler, bugünün ziyaretleri, doğum günleri ve uzun süredir gelmeyenler.
 - **Müşteriler:** arama, filtre (VIP, doğum günü, gelmeyen, alerji), sıralama, tablo / kart görünümü, müşteri kartı ve ziyaret geçmişi.
+- **Randevular:** gün ve hafta görünümü, saat / süre / uzman, çakışma uyarısı, WhatsApp hatırlatma, “Geldi” ile ziyarete çevirme.
+- **Ürünler & Stok:** HAKEDIS.xlsx STOK LISTESI'ndeki 30 ürün; satış, stok girişi, kalan stok ve düşük stok uyarısı.
 - **Ziyaret Defteri:** dönem seçimi (bugün, hafta, ay, özel tarih), ödeme / uzman filtresi, gün gün tutarlar, CSV.
 - **Raporlar (yönetici):** brüt / net ciro, ödeme türü, grup, işlem ve uzman bazlı döküm, isteğe bağlı hakediş.
 - **Fiyat Listesi:** HAKEDIS.xlsx'teki 47 işlem; yönetici fiyatları düzenler, ziyarette işlem seçince tutar otomatik yazılır.
