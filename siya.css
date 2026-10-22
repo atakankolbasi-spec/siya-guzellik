@@ -760,3 +760,8 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 .tbl td .link.d{opacity:.75}.tbl tr:hover .link.d{opacity:1}
 
 .mcard{cursor:pointer;position:relative}.mcard .msil{position:absolute;top:12px;right:14px}
+
+.save-status.esit,.save-status.baglan{background:color-mix(in srgb,var(--a2) 22%,var(--card));color:color-mix(in srgb,var(--a2) 55%,#4a3200)}
+.save-status.esit::before,.save-status.baglan::before{background:var(--a2);box-shadow:0 0 0 3px color-mix(in srgb,var(--a2) 30%,transparent);animation:pulse 1s infinite}
+.save-status.hata{background:color-mix(in srgb,var(--bad) 16%,var(--card));color:var(--bad)}
+.save-status.hata::before{background:var(--bad);box-shadow:0 0 0 3px color-mix(in srgb,var(--bad) 28%,transparent)}

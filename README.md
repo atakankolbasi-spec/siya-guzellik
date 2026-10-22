@@ -1,7 +1,7 @@
 # SİYA | Güzellik & Kuaför — Müşteri Kayıtları
 
 Kurulum gerektirmeyen statik sayfa. Tasarım, PCS Transit YYS panosundaki "Kontrol Kulesi" düzeninin gül-altın uyarlamasıdır.
-Veriler tarayıcıda (localStorage) tutulur; düzenli olarak Ayarlar > Yedekle / Aktar ile JSON yedeği alın.
+Veriler Supabase'de (bulut) tutulur; tarayıcı yalnızca önbellek olarak kullanılır. Kurulum: `supabase/kurulum.sql` (tablolar, yetki kuralları, anlık güncelleme) ve `supabase/functions/kullanici-yonet` (kullanıcı açma/silme). Bağlantı bilgileri `siya.js` başındadır (`BULUT_URL`, `BULUT_KEY`); URL boş bırakılırsa uygulama eskisi gibi yalnızca bu cihazda çalışır. Ayarlar > Yedekle / Aktar ile JSON yedeği yine alınabilir.
 
 ## Sayfalar
 
@@ -18,7 +18,7 @@ Ctrl+K: müşteri, işlem ya da sayfa hızlı arama. Telefonda menü alta iner.
 
 ## Kullanıcılar
 
-İlk açılışta yönetici hesabı kurulur. Personel müşteri ve ziyaret ekler/düzenler; silme, fiyat listesi, ciro, raporlar ve yedekleme yöneticiye aittir.
+Bulut modunda giriş Supabase Auth iledir: kullanıcı adı (arkada `kullanıcıadı@siya-giris.com`) ya da e-posta + şifre. İlk açılan hesap otomatik yönetici olur; sonrakileri yönetici Ayarlar > Kullanıcılar'dan açar. (Yerel mod: ilk açılışta yönetici hesabı kurulur.) Personel müşteri ve ziyaret ekler/düzenler; silme, fiyat listesi, ciro, raporlar ve yedekleme yöneticiye aittir.
 Şifreler tarayıcıda PBKDF2 ile özetlenir. Veri sunucuda olmadığı için bu giriş ortak bilgisayarda kötü niyetli birine karşı koruma sağlamaz; gerçek güvenlik için sonraki adım Supabase'tir.
 
 ## Dosyalar
