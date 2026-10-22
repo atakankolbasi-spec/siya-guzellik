@@ -758,3 +758,5 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 
 .zb-a{display:flex;gap:10px;justify-content:flex-end}
 .tbl td .link.d{opacity:.75}.tbl tr:hover .link.d{opacity:1}
+
+.mcard{cursor:pointer;position:relative}.mcard .msil{position:absolute;top:12px;right:14px}

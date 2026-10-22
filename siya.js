@@ -129,6 +129,7 @@
     catch (e) { bildir('Kaydedilemedi: tarayıcı depolaması dolu ya da kapalı.'); return false; }
   }
   function yonetici() { return !!oturum && oturum.rol === 'yonetici'; }
+  function silebilir() { return yonetici() || (!!oturum && ayarlar.personelSil === true); }
   function kaydet() {
     try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
     catch (e) { bildir('Kaydedilemedi: tarayıcı depolaması dolu ya da kapalı.'); return false; }
@@ -323,7 +324,7 @@
   function yukleAyar() {
     var v = {};
     try { v = JSON.parse(localStorage.getItem(AYAR_KEY)) || {}; } catch (e) { v = {}; }
-    var vars = { tema: 'light', vurgu: '#b8506a', yogunluk: 'normal', yazi: '100', kose: 'yumusak', anim: true, menuSabit: false, gorunum: 'tablo', kartKesinti: 20, ortakAd: '', ortakPay: 50, ortakGrup: 'Kuaför', sonYedek: '' };
+    var vars = { personelSil: false, tema: 'light', vurgu: '#b8506a', yogunluk: 'normal', yazi: '100', kose: 'yumusak', anim: true, menuSabit: false, gorunum: 'tablo', kartKesinti: 20, ortakAd: '', ortakPay: 50, ortakGrup: 'Kuaför', sonYedek: '' };
     Object.keys(vars).forEach(function (k) { if (v[k] === undefined) v[k] = vars[k]; });
     return v;
   }
@@ -442,7 +443,7 @@
           '<span class="zb-isl">' + (x.z.hizmetler || []).map(function (h) { return '<span class="zb-box">' + esc(h) + '</span>'; }).join('') + (x.z.not ? '<small class="znote">' + esc(x.z.not) + '</small>' : '') + '</span>' +
           '<span class="zb-u">' + esc(x.z.personel || '—') + '</span><span class="zb-t">' + para(x.z.tutar) + '</span>' +
           '<span class="zb-a"><button class="link" type="button" data-act="z-duzenle" data-id="' + esc(x.m.id) + '" data-z="' + esc(x.z.id) + '">Düzenle</button>' +
-          (adm ? '<button class="link d" type="button" data-act="z-sil" data-id="' + esc(x.m.id) + '" data-z="' + esc(x.z.id) + '">Sil</button>' : '') + '</span></div>';
+          (silebilir() ? '<button class="link d" type="button" data-act="z-sil" data-id="' + esc(x.m.id) + '" data-z="' + esc(x.z.id) + '">Sil</button>' : '') + '</span></div>';
       }).join('') : '<div class="zb-bos">Bu gün için ziyaret kaydı yok.</div>') + '</div>';
   }
 
@@ -571,16 +572,16 @@
     if (ayarlar.gorunum === 'kart') {
       html = '<div class="mcards">' + goster.map(function (m) {
         var son = sonZiyaret(m);
-        return '<button type="button" class="mcard" data-act="ac" data-id="' + esc(m.id) + '"><span class="avatar" style="' + renkler(m.ad) + '">' + esc(bas(m.ad)) + '</span>' +
+        return '<div class="mcard" role="button" tabindex="0" data-act="ac" data-id="' + esc(m.id) + '"><span class="avatar" style="' + renkler(m.ad) + '">' + esc(bas(m.ad)) + '</span>' +
           '<b>' + esc(m.ad) + '</b><span class="tags">' + rozet(m) + '</span><small>' + esc(m.tel || 'Telefon yok') + '</small>' +
-          '<span class="mrow"><span><small>Son ziyaret</small><b>' + (son ? tarihGoster(son) : '—') + '</b></span><span><small>Ziyaret</small><b>' + (m.ziyaretler || []).length + '</b></span><span><small>Harcama</small><b>' + para(toplam(m)) + '</b></span></span></button>';
+          '<span class="mrow"><span><small>Son ziyaret</small><b>' + (son ? tarihGoster(son) : '—') + '</b></span><span><small>Ziyaret</small><b>' + (m.ziyaretler || []).length + '</b></span><span><small>Harcama</small><b>' + para(toplam(m)) + '</b></span></span>' + (silebilir() ? '<button class="link d msil" type="button" data-act="m-sil" data-id="' + esc(m.id) + '">Sil</button>' : '') + '</div>';
       }).join('') + '</div>';
     } else {
-      html = '<div class="tbl-wrap"><table class="tbl click"><thead><tr><th>Müşteri</th><th>Telefon</th><th>Son ziyaret</th><th class="r">Ziyaret</th><th class="r">Harcama</th>' + (yonetici() ? '<th></th>' : '') + '</tr></thead><tbody>' +
+      html = '<div class="tbl-wrap"><table class="tbl click"><thead><tr><th>Müşteri</th><th>Telefon</th><th>Son ziyaret</th><th class="r">Ziyaret</th><th class="r">Harcama</th>' + (silebilir() ? '<th></th>' : '') + '</tr></thead><tbody>' +
         goster.map(function (m) {
           var son = sonZiyaret(m);
           return '<tr data-act="ac" data-id="' + esc(m.id) + '"><td><div class="cust"><span class="avatar" style="' + renkler(m.ad) + '">' + esc(bas(m.ad)) + '</span><span><b>' + esc(m.ad) + '</b><span class="tags">' + rozet(m) + '</span></span></div></td>' +
-            '<td>' + esc(m.tel || '—') + '</td><td>' + (son ? tarihGoster(son) : '—') + '</td><td class="r">' + (m.ziyaretler || []).length + '</td><td class="r"><b>' + para(toplam(m)) + '</b></td>' + (yonetici() ? '<td class="r"><button class="link d" type="button" data-act="m-sil" data-id="' + esc(m.id) + '">Sil</button></td>' : '') + '</tr>';
+            '<td>' + esc(m.tel || '—') + '</td><td>' + (son ? tarihGoster(son) : '—') + '</td><td class="r">' + (m.ziyaretler || []).length + '</td><td class="r"><b>' + para(toplam(m)) + '</b></td>' + (silebilir() ? '<td class="r"><button class="link d" type="button" data-act="m-sil" data-id="' + esc(m.id) + '">Sil</button></td>' : '') + '</tr>';
         }).join('') + '</tbody></table></div>';
     }
     kutu.innerHTML = '<div class="count">' + l.length + ' müşteri</div>' + html +
@@ -726,7 +727,8 @@
         r('ORTAK PAYI (%)', 'Seçili grubun net cirosundan ayrılan pay', '<input class="num" type="number" min="0" max="100" step="1" data-in="ay-ortakPay" value="' + esc(ayarlar.ortakPay) + '">'),
         r('HAKEDİŞ GRUBU', 'Payın hesaplandığı işlem grubu', '<select data-in="ay-ortakGrup">' + grupSec.map(function (g) { return '<option' + (ayarlar.ortakGrup === g ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>')
       ],
-      kullanicilar: [r('KULLANICILAR', kullanicilar.length + ' hesap. Personel müşteri, ziyaret, randevu ve satış ekleyebilir; silme, fiyat, ciro, rapor ve yedek yönetici işidir.', '<button class="btn primary" type="button" data-act="kullanicilar">Kullanıcıları Yönet</button>')],
+      kullanicilar: [r('PERSONEL SİLME YETKİSİ', 'Açıksa personel hesapları müşteri, ziyaret ve randevu kaydını silebilir (ürün, satış ve fiyat silme yönetici işidir)', tgl('personelSil', ayarlar.personelSil === true), 'BU CİHAZ'),
+        r('KULLANICILAR', kullanicilar.length + ' hesap. Personel müşteri, ziyaret, randevu ve satış ekleyebilir; silme, fiyat, ciro, rapor ve yedek yönetici işidir.', '<button class="btn primary" type="button" data-act="kullanicilar">Kullanıcıları Yönet</button>')],
       veri: [
         r('KAYITLAR', db.length + ' müşteri · ' + tumZ().length + ' ziyaret · ' + randevular.length + ' randevu · ' + urunler.length + ' ürün · yaklaşık ' + depo + ' KB. Son yedek: ' + (ayarlar.sonYedek ? tarihGoster(ayarlar.sonYedek.slice(0, 10)) : 'hiç alınmadı'), '<button class="btn primary" type="button" data-act="yedek">Yedekle / Aktar</button>'),
         r('TÜM VERİLERİ SİL', 'Müşteri, ziyaret, randevu ve ürün satışları silinir (fiyat listesi ve ürün kartları kalır)', '<button class="btn danger" type="button" data-act="sifirla">Tüm Verileri Sil</button>')
@@ -865,7 +867,7 @@
     var is = {
       'yeni-musteri': function () { musteriForm(); }, 'yeni-ziyaret': hizliZiyaret,
       'yeni-randevu': function () { randevuForm(null); },
-      'z-sil': function () { var m = bul(a.getAttribute('data-id')); if (!yonetici() || !m || !confirm('Bu ziyaret kaydı silinsin mi?')) return; m.ziyaretler = m.ziyaretler.filter(function (x) { return x.id !== a.getAttribute('data-z'); }); kaydet(); render(); bildir('Ziyaret silindi.'); },
+      'z-sil': function () { var m = bul(a.getAttribute('data-id')); if (!silebilir() || !m || !confirm('Bu ziyaret kaydı silinsin mi?')) return; m.ziyaretler = m.ziyaretler.filter(function (x) { return x.id !== a.getAttribute('data-z'); }); kaydet(); render(); bildir('Ziyaret silindi.'); },
       'm-sil': function () { sil(a.getAttribute('data-id')); },
       'urun-sil': function () { var u = bulUrun(a.getAttribute('data-id')); if (!yonetici() || !u || !confirm('“' + u.ad + '” ürünü silinsin mi? Geçmiş satış kayıtları durur.')) return; urunler = urunler.filter(function (x) { return x.id !== u.id; }); kaydetUrun(); render(); bildir('Ürün silindi.'); },
       'pg-gun': function () { durum.pg = a.getAttribute('data-gun'); render(); },
@@ -874,7 +876,7 @@
       'rv-geldi': function () { randevuGeldi(randevular.filter(function (r) { return r.id === a.getAttribute('data-id'); })[0]); },
       'rv-durum': function () { var r = randevular.filter(function (x) { return x.id === a.getAttribute('data-id'); })[0]; r.durum = a.getAttribute('data-d'); kaydetRan(); render(); },
       'rv-duzenle': function () { randevuForm(randevular.filter(function (x) { return x.id === a.getAttribute('data-id'); })[0]); },
-      'rv-sil': function () { if (!yonetici() || !confirm('Randevu silinsin mi?')) return; randevular = randevular.filter(function (x) { return x.id !== a.getAttribute('data-id'); }); kaydetRan(); render(); },
+      'rv-sil': function () { if (!silebilir() || !confirm('Randevu silinsin mi?')) return; randevular = randevular.filter(function (x) { return x.id !== a.getAttribute('data-id'); }); kaydetRan(); render(); },
       'urun-sat': function () { satisForm(a.getAttribute('data-id')); }, 'urun-ekle': function () { urunForm(null); },
       'urun-duzenle': function () { urunForm(bulUrun(a.getAttribute('data-id'))); }, 'urun-giris': function () { urunGiris(bulUrun(a.getAttribute('data-id'))); },
       'satis-sil': function () { if (!yonetici() || !confirm('Bu satış silinsin mi? Ürün stoğa geri eklenir.')) return; urunSatis = urunSatis.filter(function (x) { return x.id !== a.getAttribute('data-id'); }); kaydetUSat(); render(); },
@@ -957,10 +959,10 @@
       '<div class="full"><label for="f-nt">Notlar / tercihler</label><textarea id="f-nt" maxlength="800" placeholder="Örn. 7 numara dip boya, kahve sever, sabah randevusu tercih eder">' + esc(m.not) + '</textarea></div>' +
       '<div class="full check"><input id="f-vip" type="checkbox"' + (m.vip ? ' checked' : '') + '><label for="f-vip" style="margin:0;color:inherit;font-size:14px">★ VIP müşteri</label></div>' +
       '</div><p class="err" id="f-err" hidden></p></div>' +
-      '<div class="m-foot">' + (id && yonetici() ? '<button type="button" class="btn danger left" id="sil">Müşteriyi Sil</button>' : '') +
+      '<div class="m-foot">' + (id && silebilir() ? '<button type="button" class="btn danger left" id="sil">Müşteriyi Sil</button>' : '') +
       '<button type="button" class="btn" id="vazgec">Vazgeç</button><button class="btn primary" type="submit">Kaydet</button></div></form>');
     $('#vazgec').onclick = function () { id ? detay(id) : kapat(); };
-    if (id && yonetici()) $('#sil').onclick = function () { sil(id); };
+    if (id && silebilir()) $('#sil').onclick = function () { sil(id); };
     $('#mf').onsubmit = function (e) {
       e.preventDefault();
       var ad = $('#f-ad').value.trim();
@@ -979,7 +981,7 @@
   }
   function sil(id) {
     var m = bul(id);
-    if (!yonetici()) return;
+    if (!silebilir()) return;
     if (!m || !confirm('“' + m.ad + '” ve tüm ziyaret geçmişi silinsin mi? Bu işlem geri alınamaz.')) return;
     db = db.filter(function (x) { return x.id !== id; });
     kaydet(); tazele(); kapat(); bildir('Müşteri silindi.');
@@ -1010,17 +1012,17 @@
           '<span class="svc">' + (z.hizmetler || []).map(function (s) { return '<i>' + esc(s) + '</i>'; }).join('') + '</span>' +
           '<span class="meta">' + [z.personel && 'Uzman: ' + z.personel, z.odeme, z.not, z.ekleyen && 'Kaydeden: ' + z.ekleyen].filter(Boolean).map(esc).join(' · ') + '</span>' +
           '<span class="acts"><button class="link" data-zd="' + esc(z.id) + '" type="button">Düzenle</button>' +
-          (yonetici() ? '<button class="link d" data-zs="' + esc(z.id) + '" type="button">Sil</button>' : '') + '</span></div>';
+          (silebilir() ? '<button class="link d" data-zs="' + esc(z.id) + '" type="button">Sil</button>' : '') + '</span></div>';
       }).join('') : '<p style="color:var(--muted)">Henüz ziyaret kaydı yok.</p>') +
       (urunSatis.filter(function (x) { return x.musteriId === m.id; }).length ? '<div class="sec">Ürün Alımları</div>' + urunSatis.filter(function (x) { return x.musteriId === m.id; }).map(function (x) { return '<div class="visit"><span class="d">' + tarihGoster(x.tarih) + '</span><span class="money">' + para(x.adet * x.fiyat) + '</span><span class="svc"><i>' + esc(x.adet + ' × ' + x.ad) + '</i></span></div>'; }).join('') : '') +
-      '</div><div class="m-foot"><button class="btn" id="yazdir" type="button">Yazdır</button><button class="btn" id="rvekle" type="button">Randevu Ver</button>' + (yonetici() ? '<button class="btn danger" id="msil" type="button">Müşteriyi Sil</button>' : '') +
+      '</div><div class="m-foot"><button class="btn" id="yazdir" type="button">Yazdır</button><button class="btn" id="rvekle" type="button">Randevu Ver</button>' + (silebilir() ? '<button class="btn danger" id="msil" type="button">Müşteriyi Sil</button>' : '') +
       '<button class="btn" id="duzenle" type="button">Bilgileri Düzenle</button>' +
       '<button class="btn primary" id="zekle" type="button">+ Ziyaret Ekle</button></div>';
     ac(h);
     $('#duzenle').onclick = function () { musteriForm(id); };
     $('#yazdir').onclick = function () { window.print(); };
     $('#rvekle').onclick = function () { randevuForm(null); setTimeout(function () { var i = $('#rv-m'); if (i) i.value = m.ad + (m.tel ? ' · ' + m.tel : ''); }, 40); };
-    if (yonetici()) $('#msil').onclick = function () { sil(id); };
+    if (silebilir()) $('#msil').onclick = function () { sil(id); };
     $('#zekle').onclick = function () { ziyaretModal(m, null, { geri: function () { detay(id); } }); };
     Array.prototype.forEach.call(modal.querySelectorAll('[data-zd]'), function (b) {
       b.onclick = function () {
@@ -1029,7 +1031,7 @@
     });
     Array.prototype.forEach.call(modal.querySelectorAll('[data-zs]'), function (b) {
       b.onclick = function () {
-        if (!yonetici() || !confirm('Bu ziyaret kaydı silinsin mi?')) return;
+        if (!silebilir() || !confirm('Bu ziyaret kaydı silinsin mi?')) return;
         m.ziyaretler = m.ziyaretler.filter(function (z) { return z.id !== b.getAttribute('data-zs'); });
         kaydet(); tazele(); detay(id);
       };
@@ -1159,8 +1161,8 @@
       '<div class="full"><label for="z-n">Not (kullanılan ürün, renk kodu, sonuç…)</label><textarea id="z-n" maxlength="500">' + esc(z ? z.not : (on.not || '')) + '</textarea></div>' +
       '</div></div><div class="m-foot"><div class="tutarbox left"><label for="z-tu">TUTAR (₺)</label><input id="z-tu" type="number" min="0" step="1" inputmode="numeric" value="' + esc(z ? z.tutar : '') + '">' +
       '<button type="button" class="link" id="z-oto" hidden>otomatik hesapla</button></div>' +
-      '' + (z && yonetici() ? '<button type="button" class="btn danger" id="z-sil">Ziyareti Sil</button>' : '') + '<button type="button" class="btn" id="z-v">Vazgeç</button><button class="btn primary" type="submit">Kaydet</button></div></form>');
-    if (z && yonetici()) $('#z-sil').onclick = function () {
+      '' + (z && silebilir() ? '<button type="button" class="btn danger" id="z-sil">Ziyareti Sil</button>' : '') + '<button type="button" class="btn" id="z-v">Vazgeç</button><button class="btn primary" type="submit">Kaydet</button></div></form>');
+    if (z && silebilir()) $('#z-sil').onclick = function () {
       if (!confirm('Bu ziyaret kaydı silinsin mi?')) return;
       m.ziyaretler = m.ziyaretler.filter(function (x) { return x.id !== z.id; });
       if (kaydet()) { tazele(); geri(); bildir('Ziyaret silindi.'); }
@@ -1248,7 +1250,7 @@
         '<div class="rvsvc">' + ((r.kalemler || []).length ? r.kalemler.map(function (k) { return '<span class="pill">' + esc(k.ad) + '</span>'; }).join('') : '<span class="hint">İşlem belirtilmedi</span>') + '</div>' +
         '<div class="rvmeta">' + [r.personel && 'Uzman: ' + r.personel, r.tel, r.not].filter(Boolean).map(esc).join(' · ') + '</div>' +
         '<div class="rvacts">' + acts + '<button class="link" type="button" data-act="rv-duzenle" data-id="' + esc(r.id) + '">Düzenle</button>' +
-        (yonetici() ? '<button class="link d" type="button" data-act="rv-sil" data-id="' + esc(r.id) + '">Sil</button>' : '') + '</div></div>' +
+        (silebilir() ? '<button class="link d" type="button" data-act="rv-sil" data-id="' + esc(r.id) + '">Sil</button>' : '') + '</div></div>' +
         '<div class="rvprice">' + (kalemToplam(r.kalemler || []) ? '<b>' + para(kalemToplam(r.kalemler)) + '</b><small>tahmini</small>' : '') + '</div></div>';
     }).join('');
     return sayfaBasligi(sf('randevular'), '<button class="btn primary" type="button" data-act="yeni-randevu">' + ik('arti') + ' Randevu Ekle</button>') +
