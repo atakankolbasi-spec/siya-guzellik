@@ -2,8 +2,30 @@
   'use strict';
 
   var KEY = 'siya.musteriler.v1';
-  var VARSAYILAN_HIZMETLER = ['Saç Kesimi', 'Fön', 'Saç Boyama', 'Röfle / Balyaj', 'Keratin', 'Perma', 'Saç Bakımı', 'Manikür', 'Pedikür',
+  /* Kaynak: HAKEDIS.xlsx > KUAFOR FIYAT ve GUZELLIK FIYAT sayfaları */
+  var VARSAYILAN_HIZMETLER = [
+    ['Kuaför', 'Fön', 300], ['Kuaför', 'Fön & Yıkama', 400], ['Kuaför', 'Kırık Fön', 400], ['Kuaför', 'Kırık Fön & Yıkama', 500],
+    ['Kuaför', 'Yıkama', 150], ['Kuaför', 'Saç Kesim', 500], ['Kuaför', 'Saç Kesim & Yıkama', 600], ['Kuaför', 'Maşa', 600],
+    ['Kuaför', 'Topuz', 1000], ['Kuaför', 'Ombre, Sombre, Röfle - Başlangıç Fiyat', 2500], ['Kuaför', 'Perma - Başlangıç Fiyat', 2500],
+    ['Kuaför', 'Brezilya Fönü - Başlangıç Fiyat', 1500], ['Kuaför', 'Keratin Botoks', 1500], ['Kuaför', 'Dip Boya', 600],
+    ['Kuaför', 'Komple Boya', 1000], ['Kuaför', 'Kaynak', 12500], ['Kuaför', 'Cila', 500], ['Kuaför', 'Şok Bakım', 1000],
+    ['Güzellik', 'Cilt Bakım', 1250], ['Güzellik', 'Saç Terapisi', 1500], ['Güzellik', 'G5 Zayıflama - 6 Seans', 2000],
+    ['Güzellik', 'Slim Thin - 6 Seans (Bacak-Göbek)', 4000], ['Güzellik', 'Slim Thin - 6 Seans (Kol)', 2500],
+    ['Güzellik', 'Collift Yüz Gençleştirme', 3500], ['Güzellik', 'Microblading (Kıl Tekniği Kaş)', 3000],
+    ['Güzellik', 'Ölçülü Kaş Alım', 200], ['Güzellik', 'Manikür', 300], ['Güzellik', 'Pedikür', 500],
+    ['Güzellik', 'Manikür & Kalıcı Oje', 550], ['Güzellik', 'Pedikür & Kalıcı Oje', 850], ['Güzellik', 'Protez Tırnak', 1000],
+    ['Güzellik', 'French & İnci Tozu', 100], ['Güzellik', 'Jel Güçlendirme', 850],
+    ['Lazer', 'Albycold Diode Lazer 3 Bölge (Kolaltı-Genital-Tüm Bacak) - Tek Seans', 1500],
+    ['Lazer', 'Albycold Diode Lazer Komple Vücut - Tek Seans', 2000], ['Lazer', 'Albycold Diode Lazer - Bacak', 750],
+    ['Lazer', 'Albycold Diode Lazer - Kol', 750], ['Lazer', 'Albycold Diode Lazer - Genital', 500],
+    ['Lazer', 'Albycold Diode Lazer - Kolaltı', 500], ['Lazer', 'Albycold Diode Lazer - Tüm Yüz', 500],
+    ['Lazer', 'Albycold Diode Lazer - Bıyık', 350],
+    ['Ağda', 'Ağda 3 Bölge (Kolaltı-Genital-Tüm Bacak)', 1000], ['Ağda', 'Ağda Komple Vücut', 1500], ['Ağda', 'Ağda - Kolaltı', 250],
+    ['Ağda', 'Ağda - Genital', 500], ['Ağda', 'Ağda - Bacak', 500], ['Ağda', 'Ağda - Kol', 500]
+  ];
+  var ESKI_VARSAYILAN = ['Saç Kesimi', 'Fön', 'Saç Boyama', 'Röfle / Balyaj', 'Keratin', 'Perma', 'Saç Bakımı', 'Manikür', 'Pedikür',
     'Kalıcı Oje', 'Protez Tırnak', 'Cilt Bakımı', 'Kaş / Kirpik', 'Makyaj', 'Gelin Başı', 'Ağda', 'Lazer', 'Masaj'];
+  var KATEGORILER = ['Kuaför', 'Güzellik', 'Lazer', 'Ağda'];
   var HIZ_KEY = 'siya.hizmetler.v1', KUL_KEY = 'siya.kullanicilar.v1', OTURUM_KEY = 'siya.oturum';
   var ODEMELER = ['Nakit', 'Kredi Kartı', 'Havale / EFT'];
   var GUN_RISK = 60;
@@ -26,9 +48,12 @@
   function yukleHiz() {
     try {
       var v = JSON.parse(localStorage.getItem(HIZ_KEY));
-      if (Array.isArray(v)) return v;
+      var eskiVarsayilan = Array.isArray(v) && v.length && v.every(function (h) {
+        return !h.fiyat && !h.kategori && ESKI_VARSAYILAN.indexOf(h.ad) > -1;
+      });
+      if (Array.isArray(v) && !eskiVarsayilan) return v;
     } catch (e) { /* ilk açılış */ }
-    var ilk = VARSAYILAN_HIZMETLER.map(function (ad) { return { id: yeniId(), ad: ad, fiyat: 0 }; });
+    var ilk = VARSAYILAN_HIZMETLER.map(function (h) { return { id: yeniId(), kategori: h[0], ad: h[1], fiyat: h[2] }; });
     try { localStorage.setItem(HIZ_KEY, JSON.stringify(ilk)); } catch (e) { /* depolama kapalı */ }
     return ilk;
   }
@@ -306,15 +331,24 @@
     });
   }
 
+  function kategoriler(liste) {
+    var sira = [], tut = {};
+    liste.forEach(function (h) {
+      if (!tut[h.kategori]) { tut[h.kategori] = { ad: h.kategori, liste: [] }; sira.push(tut[h.kategori]); }
+      tut[h.kategori].liste.push(h);
+    });
+    sira.sort(function (a, b) { return (a.ad === 'Diğer') - (b.ad === 'Diğer'); });
+    return sira;
+  }
   function ziyaretForm(m, z) {
     var kalemler = (z && z.kalemler) || [];
     var secili = (z && z.hizmetler) || [];
-    var katalog = hizmetler.map(function (h) { return { ad: h.ad, fiyat: Number(h.fiyat) || 0 }; });
+    var katalog = hizmetler.map(function (h) { return { ad: h.ad, fiyat: Number(h.fiyat) || 0, kategori: h.kategori || 'Diğer' }; });
     var adlar = katalog.map(function (h) { return h.ad; });
     secili.forEach(function (ad) {
       if (adlar.indexOf(ad) > -1) return;
       var k = kalemler.filter(function (x) { return x.ad === ad; })[0];
-      katalog.push({ ad: ad, fiyat: k ? Number(k.fiyat) || 0 : 0 });
+      katalog.push({ ad: ad, fiyat: k ? Number(k.fiyat) || 0 : 0, kategori: 'Diğer' });
     });
     var kutu = $('#vform');
     kutu.className = 'vform f';
@@ -322,10 +356,14 @@
       '<div><label for="z-t">Tarih *</label><input id="z-t" type="date" required value="' + esc(z ? z.tarih : bugun()) + '"></div>' +
       '<div><label for="z-tu">Tutar (₺) <button type="button" class="link" id="z-oto" hidden>otomatik hesapla</button></label>' +
       '<input id="z-tu" type="number" min="0" step="1" inputmode="numeric" value="' + esc(z ? z.tutar : '') + '"></div>' +
-      '<div class="full"><span class="lbl">Yapılan işlemler <span id="z-top" class="hint"></span></span><div class="pick" id="z-h">' + katalog.map(function (h) {
-        return '<label><input type="checkbox" value="' + esc(h.ad) + '" data-fiyat="' + h.fiyat + '"' + (secili.indexOf(h.ad) > -1 ? ' checked' : '') + '><span>' +
-          esc(h.ad) + (h.fiyat ? ' <em>' + para(h.fiyat) + '</em>' : '') + '</span></label>';
-      }).join('') + '</div>' + (yonetici() ? '' : '') + '</div>' +
+      '<div class="full"><span class="lbl">Yapılan işlemler <span id="z-top" class="hint"></span></span>' +
+      '<input id="z-ara" type="search" class="pickara" placeholder="İşlem ara…" aria-label="İşlem ara" autocomplete="off">' +
+      '<div id="z-h">' + kategoriler(katalog).map(function (k) {
+        return '<div class="grp"><div class="grp-ad">' + esc(k.ad) + '</div><div class="pick">' + k.liste.map(function (h) {
+          return '<label data-ad="' + esc(tr(h.ad)) + '"><input type="checkbox" value="' + esc(h.ad) + '" data-fiyat="' + h.fiyat + '"' + (secili.indexOf(h.ad) > -1 ? ' checked' : '') + '><span>' +
+            esc(h.ad) + (h.fiyat ? ' <em>' + para(h.fiyat) + '</em>' : '') + '</span></label>';
+        }).join('') + '</div></div>';
+      }).join('') + '</div></div>' +
       '<div><label for="z-o">Listede olmayan işlem</label><input id="z-o" maxlength="60" placeholder="İşlem adı"></div>' +
       '<div><label for="z-of">Fiyatı (₺)</label><input id="z-of" type="number" min="0" step="1" inputmode="numeric"></div>' +
       '<div><label for="z-p">Uzman</label><input id="z-p" list="z-pl" maxlength="60" value="' + esc(z ? z.personel : (oturum && oturum.ad)) + '">' +
@@ -359,6 +397,15 @@
       $('#z-oto').hidden = !elle || Number($('#z-tu').value) === t;
     }
     $('#z-h').addEventListener('change', guncelle);
+    $('#z-ara').addEventListener('input', function (e) {
+      var q = tr(e.target.value).trim();
+      Array.prototype.forEach.call(document.querySelectorAll('#z-h label'), function (l) {
+        l.hidden = !!q && l.getAttribute('data-ad').indexOf(q) < 0 && !l.querySelector('input').checked;
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('#z-h .grp'), function (g) {
+        g.hidden = !g.querySelector('label:not([hidden])');
+      });
+    });
     $('#z-o').addEventListener('input', guncelle);
     $('#z-of').addEventListener('input', guncelle);
     $('#z-tu').addEventListener('input', function () { elle = true; guncelle(); });
@@ -385,12 +432,12 @@
   /* ---------- fiyat listesi (yönetici) ---------- */
   function fiyatEkrani() {
     if (!yonetici()) return;
-    var kopya = hizmetler.map(function (h) { return { id: h.id, ad: h.ad, fiyat: h.fiyat }; });
+    var kopya = hizmetler.map(function (h) { return { id: h.id, kategori: h.kategori || '', ad: h.ad, fiyat: h.fiyat }; });
     function oku() {
       Array.prototype.forEach.call(modal.querySelectorAll('.fyrow'), function (r) {
         var k = kopya[Number(r.getAttribute('data-i'))];
         if (!k) return;
-        k.ad = r.querySelector('.fy-ad').value; k.fiyat = r.querySelector('.fy-fi').value;
+        k.ad = r.querySelector('.fy-ad').value; k.fiyat = r.querySelector('.fy-fi').value; k.kategori = r.querySelector('.fy-kt').value;
       });
     }
     function ciz(odak) {
@@ -398,13 +445,13 @@
         '<p class="hint">İşlem adlarını ve fiyatlarını buradan belirleyin. Ziyaret eklerken işlem seçilince tutar otomatik yazılır. ' +
         'Fiyatı değiştirmek <b>geçmiş ziyaretleri</b> etkilemez.</p><div id="fl">' +
         (kopya.length ? kopya.map(function (k, i) {
-          return '<div class="fyrow" data-i="' + i + '"><input class="fy-ad" maxlength="60" aria-label="İşlem adı" placeholder="İşlem adı" value="' + esc(k.ad) + '">' +
+          return '<div class="fyrow" data-i="' + i + '"><input class="fy-kt" list="fy-kl" maxlength="30" aria-label="Grup" placeholder="Grup" value="' + esc(k.kategori) + '"><input class="fy-ad" maxlength="60" aria-label="İşlem adı" placeholder="İşlem adı" value="' + esc(k.ad) + '">' +
             '<input class="fy-fi" type="number" min="0" step="1" inputmode="numeric" aria-label="Fiyat (₺)" placeholder="0" value="' + esc(k.fiyat) + '">' +
             '<span class="tl">₺</span><button class="link d" type="button" data-sil="' + i + '">Sil</button></div>';
         }).join('') : '<p class="hint">Henüz işlem yok.</p>') +
-        '</div><button class="btn sm" id="fy-ekle" type="button" style="margin-top:10px">+ İşlem ekle</button></div>' +
+        '</div><datalist id="fy-kl">' + KATEGORILER.map(function (k) { return '<option value="' + esc(k) + '">'; }).join('') + '</datalist><button class="btn sm" id="fy-ekle" type="button" style="margin-top:10px">+ İşlem ekle</button></div>' +
         '<div class="m-foot"><button class="btn" id="fy-v" type="button">Vazgeç</button><button class="btn primary" id="fy-k" type="button">Kaydet</button></div>');
-      $('#fy-ekle').onclick = function () { oku(); kopya.push({ id: yeniId(), ad: '', fiyat: '' }); ciz(true); };
+      $('#fy-ekle').onclick = function () { oku(); kopya.push({ id: yeniId(), kategori: kopya.length ? kopya[kopya.length - 1].kategori : '', ad: '', fiyat: '' }); ciz(true); };
       $('#fy-v').onclick = kapat;
       Array.prototype.forEach.call(modal.querySelectorAll('[data-sil]'), function (b) {
         b.onclick = function () { oku(); kopya.splice(Number(b.getAttribute('data-sil')), 1); ciz(); };
@@ -417,7 +464,7 @@
           if (!ad) continue;
           if (gor[tr(ad)]) { bildir('“' + ad + '” iki kez yazılmış.'); return; }
           gor[tr(ad)] = 1;
-          temiz.push({ id: kopya[i].id, ad: ad, fiyat: Math.max(0, Number(kopya[i].fiyat) || 0) });
+          temiz.push({ id: kopya[i].id, kategori: kopya[i].kategori.trim(), ad: ad, fiyat: Math.max(0, Number(kopya[i].fiyat) || 0) });
         }
         hizmetler = temiz;
         if (kaydetHiz()) { kapat(); bildir('Fiyat listesi kaydedildi.'); }
@@ -644,7 +691,7 @@
             if (!h || typeof h.ad !== 'string' || !h.ad.trim()) return;
             var var_ = hizmetler.filter(function (x) { return tr(x.ad) === tr(h.ad); })[0];
             if (var_) var_.fiyat = Math.max(0, Number(h.fiyat) || 0);
-            else hizmetler.push({ id: yeniId(), ad: h.ad.trim(), fiyat: Math.max(0, Number(h.fiyat) || 0) });
+            else hizmetler.push({ id: yeniId(), kategori: String(h.kategori || '').trim(), ad: h.ad.trim(), fiyat: Math.max(0, Number(h.fiyat) || 0) });
           });
           kaydetHiz();
         }
