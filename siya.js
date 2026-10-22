@@ -26,7 +26,7 @@
   var ESKI_VARSAYILAN = ['Saç Kesimi', 'Fön', 'Saç Boyama', 'Röfle / Balyaj', 'Keratin', 'Perma', 'Saç Bakımı', 'Manikür', 'Pedikür',
     'Kalıcı Oje', 'Protez Tırnak', 'Cilt Bakımı', 'Kaş / Kirpik', 'Makyaj', 'Gelin Başı', 'Ağda', 'Lazer', 'Masaj'];
   var KATEGORILER = ['Kuaför', 'Güzellik', 'Lazer', 'Ağda'];
-  var RAN_KEY = 'siya.randevular.v1', URUN_KEY = 'siya.urunler.v1', USAT_KEY = 'siya.urunsatis.v1', AYAR_KEY = 'siya.ayarlar.v1', HIZ_KEY = 'siya.hizmetler.v1', KUL_KEY = 'siya.kullanicilar.v1', OTURUM_KEY = 'siya.oturum';
+  var SON_KUL_KEY = 'siya.sonkullanici', RAN_KEY = 'siya.randevular.v1', URUN_KEY = 'siya.urunler.v1', USAT_KEY = 'siya.urunsatis.v1', AYAR_KEY = 'siya.ayarlar.v1', HIZ_KEY = 'siya.hizmetler.v1', KUL_KEY = 'siya.kullanicilar.v1', OTURUM_KEY = 'siya.oturum';
   var ODEMELER = ['Nakit', 'Kredi Kartı', 'Havale / EFT'];
   var GUN_RISK = 60;
 
@@ -229,6 +229,9 @@
     chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
     takvim: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
     kutu: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12.5l8.7-5M12 22V12.5"/>',
+    kul: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    kilit: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    goz: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     tag: '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>',
     ayar: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
     ara: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
@@ -380,7 +383,7 @@
     var icerik = ({ pano: pano, musteriler: musteriler, randevular: randevuSayfasi, ziyaretler: ziyaretSayfasi, stok: stokSayfasi, raporlar: raporSayfasi, fiyatlar: fiyatSayfasi, ayarlar: ayarSayfasi })[s[0]]();
     document.body.classList.toggle('k-wide', !!ayarlar.menuSabit);
     app.innerHTML =
-      '<aside class="sidebar"><div class="brand"><div class="brand-mark" aria-hidden="true">S</div><div class="brand-text"><div class="brand-name">SİYA</div><div class="brand-sub">GÜZELLİK &amp; KUAFÖR</div></div></div>' +
+      '<aside class="sidebar"><div class="brand"><div class="brand-mark" aria-hidden="true"><img src="logo.png" alt=""></div><div class="brand-text"><div class="brand-name">SİYA</div><div class="brand-sub">GÜZELLİK &amp; KUAFÖR</div></div></div>' +
       '<button type="button" class="k-pin" data-act="menu-sabit" title="Menüyü sabitle / daralt" aria-label="Menüyü sabitle">' + ik('panel') + '</button>' +
       '<div class="nav-label">ÇALIŞMA ALANI</div><nav aria-label="Ana gezinme">' + nav + '</nav>' +
       '<div class="sidebar-bottom"><div class="sidebar-user"><span class="avatar sm" style="' + renkler(oturum.ad) + '">' + esc(bas(oturum.ad)) + '</span>' +
@@ -1496,44 +1499,87 @@
       return { id: yeniId(), kullanici: kadi, ad: ad, rol: rol, tuz: tuz, hash: h, aktif: true };
     });
   }
+  var girisHata = 0, girisKilit = 0;
   function girisEkrani() {
-    var g = $('#giris'), ilk = !kullanicilar.length;
+    var g = $('#giris'), ilk = !kullanicilar.length, son = '';
     document.body.classList.add('kilitli');
     g.hidden = false;
+    try { son = localStorage.getItem(SON_KUL_KEY) || ''; } catch (e) { son = ''; }
+    var alan = function (id, tip, et, ikon, ek) {
+      return '<div class="lf"><label for="' + id + '">' + et + '</label><div class="lbox"><span class="li">' + ik(ikon) + '</span>' +
+        '<input id="' + id + '" type="' + tip + '" required ' + ek + '>' + (tip === 'password' ? '<button type="button" class="eye" data-g="' + id + '" aria-label="Şifreyi göster / gizle" title="Şifreyi göster / gizle">' + ik('goz') + '</button>' : '') + '</div></div>';
+    };
+    var cekirdek = '<div class="login-bg" aria-hidden="true"><i></i><i></i><i></i></div>';
     if (!(window.crypto && crypto.subtle)) {
-      g.innerHTML = '<div class="login"><h2>Güvenli bağlantı gerekli</h2><p>Giriş için sayfayı https:// adresinden açın.</p></div>';
+      g.innerHTML = cekirdek + '<div class="login"><div class="login-logo"><img src="logo.png" alt="SİYA"></div><h2>GÜVENLİ BAĞLANTI GEREKLİ</h2><p class="sub">Giriş için sayfayı https:// adresinden açın.</p></div>';
       return;
     }
-    g.innerHTML = '<form class="login f" id="gf" autocomplete="off"><span class="mark" aria-hidden="true">S</span><h2>SİYA</h2>' +
-      '<p class="sub">' + (ilk ? 'İlk kurulum: yönetici hesabını oluşturun' : 'Güzellik &amp; Kuaför · Giriş') + '</p>' +
-      (ilk ? '<label for="g-ad">Ad Soyad</label><input id="g-ad" required maxlength="60">' : '') +
-      '<label for="g-k">Kullanıcı adı</label><input id="g-k" required maxlength="30" autocapitalize="none" autocomplete="username">' +
-      '<label for="g-s">Şifre</label><input id="g-s" type="password" required autocomplete="' + (ilk ? 'new-password' : 'current-password') + '">' +
-      (ilk ? '<label for="g-s2">Şifre (tekrar)</label><input id="g-s2" type="password" required autocomplete="new-password">' : '') +
-      '<p class="err" id="g-err" hidden></p><button class="btn primary" type="submit">' + (ilk ? 'Hesabı Oluştur' : 'Giriş Yap') + '</button>' +
-      (ilk ? '<p class="hint">Bu hesap yöneticidir: fiyatları ve diğer kullanıcıları yönetir. Şifrenizi unutmayın; unutulursa bu cihazda sıfırlanamaz.</p>' : '') + '</form>';
-    function hata(t) { var e = $('#g-err'); e.textContent = t; e.hidden = false; }
+    g.innerHTML = cekirdek + '<form class="login f" id="gf" autocomplete="off" novalidate>' +
+      '<div class="login-logo"><img src="logo.png" alt="SİYA Güzellik &amp; Kuaför"></div>' +
+      '<h2>' + (ilk ? 'İLK KURULUM' : 'HOŞ GELDİNİZ') + '</h2>' +
+      '<p class="sub">' + (ilk ? 'Yönetici hesabınızı oluşturarak başlayın' : 'Müşteri kayıt sistemine giriş yapın') + '</p>' +
+      (ilk ? alan('g-ad', 'text', 'Ad soyad', 'users', 'maxlength="60" autocomplete="name"') : '') +
+      alan('g-k', 'text', 'Kullanıcı adı', 'kul', 'maxlength="30" autocapitalize="none" spellcheck="false" autocomplete="username" value="' + esc(ilk ? '' : son) + '"') +
+      alan('g-s', 'password', 'Şifre', 'kilit', 'autocomplete="' + (ilk ? 'new-password' : 'current-password') + '"') +
+      (ilk ? alan('g-s2', 'password', 'Şifre (tekrar)', 'kilit', 'autocomplete="new-password"') : '') +
+      '<p class="caps" id="g-caps" hidden>' + ik('uyari') + ' CAPS LOCK AÇIK</p>' +
+      (ilk ? '' : '<label class="rem"><input type="checkbox" id="g-hat"' + (son ? ' checked' : '') + '><span class="cb"></span>Kullanıcı adımı hatırla</label>') +
+      '<p class="err" id="g-err" role="alert" hidden></p>' +
+      '<button class="login-btn" id="g-btn" type="submit"><span>' + (ilk ? 'HESABI OLUŞTUR' : 'GİRİŞ YAP') + '</span></button>' +
+      (ilk ? '<p class="lnote">Bu hesap yöneticidir: fiyatları, kullanıcıları ve yedeği yönetir. Şifrenizi unutmayın; bu cihazda sıfırlanamaz.</p>' : '') +
+      '<div class="login-foot">' + ik('kilit') + '<span>Güvenli giriş · Şifreler özetlenerek saklanır</span></div></form>' +
+      '<div class="login-copy">© ' + new Date().getFullYear() + ' SİYA GÜZELLİK &amp; KUAFÖR</div>';
+    var btn = $('#g-btn');
+    function hata(t) { var e = $('#g-err'); e.textContent = t; e.hidden = false; var f = $('#gf'); f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); }
+    function mesgul(v, yazi) { btn.disabled = v; btn.classList.toggle('busy', v); btn.firstChild.textContent = yazi || (ilk ? 'HESABI OLUŞTUR' : 'GİRİŞ YAP'); }
+    $('#gf').addEventListener('click', function (e) {
+      var b = e.target.closest('.eye'); if (!b) return;
+      var i = $('#' + b.getAttribute('data-g')); i.type = i.type === 'password' ? 'text' : 'password'; b.classList.toggle('on', i.type === 'text');
+    });
+    $('#gf').addEventListener('keydown', function (e) {
+      if (e.getModifierState) $('#g-caps').hidden = !e.getModifierState('CapsLock');
+    });
+    $('#gf').addEventListener('input', function () { $('#g-err').hidden = true; });
+    function bekle() {
+      var kalan = Math.ceil((girisKilit - Date.now()) / 1000);
+      if (kalan > 0) { mesgul(true, kalan + ' SN BEKLEYİN'); setTimeout(bekle, 500); } else { girisHata = 0; mesgul(false); $('#g-err').hidden = true; }
+    }
+    if (Date.now() < girisKilit) bekle();
     $('#gf').onsubmit = function (e) {
       e.preventDefault();
+      if (btn.disabled) return;
       var kadi = tr($('#g-k').value.trim()), sifre = $('#g-s').value;
       if (ilk) {
         var ad = $('#g-ad').value.trim();
+        if (!ad) return hata('Ad soyad gerekli.');
         if (!/^[a-z0-9._-]{3,30}$/.test(kadi)) return hata('Kullanıcı adı 3–30 karakter; harf, rakam, nokta, tire ya da alt çizgi olabilir.');
         if (sifre.length < 6) return hata('Şifre en az 6 karakter olmalı.');
         if (sifre !== $('#g-s2').value) return hata('Şifreler aynı değil.');
+        mesgul(true, 'OLUŞTURULUYOR…');
         kullaniciYap(kadi, ad, sifre, 'yonetici').then(function (u) {
-          kullanicilar.push(u); kaydetKul(); oturumAc(u);
+          kullanicilar.push(u); kaydetKul();
+          try { localStorage.setItem(SON_KUL_KEY, kadi); } catch (x) { /* yok */ }
+          oturumAc(u);
         });
         return;
       }
+      if (!kadi || !sifre) return hata('Kullanıcı adı ve şifre gerekli.');
+      mesgul(true, 'GİRİŞ YAPILIYOR…');
       var u = kullanicilar.filter(function (x) { return x.kullanici === kadi; })[0];
-      if (!u || u.aktif === false) { hashle(sifre, '00'.repeat(16)).then(function () { hata('Kullanıcı adı ya da şifre hatalı.'); }); return; }
+      var basarisiz = function () {
+        girisHata++;
+        if (girisHata >= 5) { girisKilit = Date.now() + 30000; hata('Çok fazla hatalı deneme. 30 saniye bekleyin.'); bekle(); return; }
+        mesgul(false); hata('Kullanıcı adı ya da şifre hatalı. (' + (5 - girisHata) + ' deneme hakkı kaldı)');
+      };
+      if (!u || u.aktif === false) { hashle(sifre, '00'.repeat(16)).then(basarisiz); return; }
       hashle(sifre, u.tuz).then(function (h) {
-        if (h !== u.hash) return hata('Kullanıcı adı ya da şifre hatalı.');
+        if (h !== u.hash) return basarisiz();
+        girisHata = 0;
+        try { if ($('#g-hat').checked) localStorage.setItem(SON_KUL_KEY, kadi); else localStorage.removeItem(SON_KUL_KEY); } catch (x) { /* yok */ }
         oturumAc(u);
       });
     };
-    setTimeout(function () { $(ilk ? '#g-ad' : '#g-k').focus(); }, 30);
+    setTimeout(function () { $(ilk ? '#g-ad' : (son ? '#g-s' : '#g-k')).focus(); }, 40);
   }
   function oturumAc(u) {
     oturum = u;
