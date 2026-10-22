@@ -1,11 +1,25 @@
 # SİYA | Güzellik & Kuaför — Müşteri Kayıtları
 
-Kurulum gerektirmeyen statik müşteri kayıt sayfası. Veriler tarayıcıda (localStorage) tutulur; düzenli olarak "Yedekle / Aktar" ile JSON yedeği alın.
+Kurulum gerektirmeyen statik sayfa. Tasarım, PCS Transit YYS panosundaki "Kontrol Kulesi" düzeninin gül-altın uyarlamasıdır.
+Veriler tarayıcıda (localStorage) tutulur; düzenli olarak Ayarlar > Yedekle / Aktar ile JSON yedeği alın.
 
-Dosyalar: `index.html`, `siya.css`, `siya.js`, `siya.svg`. GitHub Pages: Settings > Pages > main / root.
+## Sayfalar
 
-## Özellikler
+- **Pano:** günün özeti, son 7 gün grafiği, grup / ödeme dağılımı, popüler işlemler, bugünün ziyaretleri, doğum günleri ve uzun süredir gelmeyenler.
+- **Müşteriler:** arama, filtre (VIP, doğum günü, gelmeyen, alerji), sıralama, tablo / kart görünümü, müşteri kartı ve ziyaret geçmişi.
+- **Ziyaret Defteri:** dönem seçimi (bugün, hafta, ay, özel tarih), ödeme / uzman filtresi, gün gün tutarlar, CSV.
+- **Raporlar (yönetici):** brüt / net ciro, ödeme türü, grup, işlem ve uzman bazlı döküm, isteğe bağlı hakediş.
+- **Fiyat Listesi:** HAKEDIS.xlsx'teki 47 işlem; yönetici fiyatları düzenler, ziyarette işlem seçince tutar otomatik yazılır.
+- **Ayarlar:** tema (açık / koyu), menü, kredi kartı kesintisi, hakediş oranı, kullanıcılar, yedek.
 
-- **Fiyat listesi** (yönetici): işlemleri ve fiyatlarını belirleyin; ziyarette işlem seçilince tutar otomatik yazılır (elle değiştirilebilir). Fiyat değişikliği geçmiş ziyaretleri etkilemez.
-- **Kullanıcılar**: ilk açılışta yönetici hesabı kurulur; yönetici personel hesapları açar. Personel müşteri ve ziyaret ekler/düzenler; silme, fiyat listesi, ciro ve yedekleme yöneticiye aittir.
-- Giriş şifreleri tarayıcıda PBKDF2 ile özetlenerek saklanır. Veriler sunucuda olmadığı için bu giriş, ortak bilgisayarda kayıtları kötü niyetli birinden korumaz; gerçek güvenlik için sonraki adım Supabase'tir.
+Ctrl+K: müşteri, işlem ya da sayfa hızlı arama. Telefonda menü alta iner.
+
+## Kullanıcılar
+
+İlk açılışta yönetici hesabı kurulur. Personel müşteri ve ziyaret ekler/düzenler; silme, fiyat listesi, ciro, raporlar ve yedekleme yöneticiye aittir.
+Şifreler tarayıcıda PBKDF2 ile özetlenir. Veri sunucuda olmadığı için bu giriş ortak bilgisayarda kötü niyetli birine karşı koruma sağlamaz; gerçek güvenlik için sonraki adım Supabase'tir.
+
+## Dosyalar
+
+`index.html`, `siya.css`, `siya.js`, `siya.svg`, `fonts/` (Inter ve Plus Jakarta Sans, SIL OFL; lisans metinleri aynı klasörde).
+GitHub Pages: Settings > Pages > main / root.
