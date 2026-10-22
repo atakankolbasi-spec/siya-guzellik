@@ -1,7 +1,7 @@
 # SİYA | Güzellik & Kuaför — Müşteri Kayıtları
 
 Kurulum gerektirmeyen statik sayfa. Tasarım, PCS Transit YYS panosundaki "Kontrol Kulesi" düzeninin gül-altın uyarlamasıdır.
-Veriler Supabase'de (bulut) tutulur; tarayıcı yalnızca önbellek olarak kullanılır. Kurulum: `supabase/kurulum.sql` (tablolar, yetki kuralları, anlık güncelleme) ve `supabase/functions/kullanici-yonet` (kullanıcı açma/silme). Bağlantı bilgileri `siya.js` başındadır (`BULUT_URL`, `BULUT_KEY`); URL boş bırakılırsa uygulama eskisi gibi yalnızca bu cihazda çalışır. Ayarlar > Yedekle / Aktar ile JSON yedeği yine alınabilir.
+Veriler Supabase'de (bulut) tutulur; tarayıcı yalnızca önbellek olarak kullanılır. Kurulum: `supabase/kurulum.sql` (tablolar, yetki kuralları, anlık güncelleme) ve `supabase/functions/kullanici-yonet` (kullanıcı açma/silme). Bağlantı bilgileri `siya.js` başındadır (`BULUT_URL`, `BULUT_KEY`); URL boş bırakılırsa uygulama eskisi gibi yalnızca bu cihazda çalışır. Ayarlar > Yedekle / Aktar ile JSON yedeği yine alınabilir. Otomatik yedekleme: `supabase/yedekleme.sql` her gece 00:00'da (Türkiye saati) tüm kayıtların kopyasını `yedekler` tablosuna alır (45 gün saklanır); yönetici Ayarlar > Veri ve Yedek > Yedekleri Göster ekranından yedekleri indirir ya da geri yükler.
 
 ## Sayfalar
 

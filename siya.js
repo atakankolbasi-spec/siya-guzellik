@@ -376,7 +376,7 @@
     if (f !== null && f < (sb ? 30 : 7)) return '';
     return '<div class="banner"><span>' + ik('uyari') + '<b>Yedek zamanı.</b> ' +
       (f === null ? 'Henüz yedek almadınız.' : f + ' gündür yedek almadınız.') +
-      (sb ? ' Veriler bulutta saklanır; yine de ayda bir yedek önerilir.' : ' Kayıtlar yalnızca bu tarayıcıda durur.') + '</span><button class="btn small" type="button" data-act="yedek">Şimdi yedekle</button></div>';
+      (sb ? ' Bulutta her gece otomatik yedek alınır; yine de ayda bir indirilmiş JSON yedeği önerilir.' : ' Kayıtlar yalnızca bu tarayıcıda durur.') + '</span><button class="btn small" type="button" data-act="yedek">Şimdi yedekle</button></div>';
   }
   function render() {
     if (!oturum) return;
@@ -737,6 +737,7 @@
         r('KULLANICILAR', kullanicilar.length + ' hesap. Personel müşteri, ziyaret, randevu ve satış ekleyebilir; silme, fiyat, ciro, rapor ve yedek yönetici işidir.', '<button class="btn primary" type="button" data-act="kullanicilar">Kullanıcıları Yönet</button>')],
       veri: [
         r('KAYITLAR', db.length + ' müşteri · ' + tumZ().length + ' ziyaret · ' + randevular.length + ' randevu · ' + urunler.length + ' ürün · yaklaşık ' + depo + ' KB. Son yedek: ' + (ayarlar.sonYedek ? tarihGoster(ayarlar.sonYedek.slice(0, 10)) : 'hiç alınmadı'), '<button class="btn primary" type="button" data-act="yedek">Yedekle / Aktar</button>'),
+        r('OTOMATİK YEDEKLER', sb ? 'Her gece 00:00\'da buluta kopya alınır, 45 gün saklanır. Yedekleri görebilir, indirebilir ve geri yükleyebilirsiniz.' : 'Bulut bağlantısı gerekir.', sb ? '<button class="btn primary" type="button" data-act="yedekler">Yedekleri Göster</button>' : '', 'BULUT'),
         r('EXCEL RAPORU', 'Günlük, haftalık ve aylık rapor; ham veri, ürün satışı ve stok sayfalarıyla (.xlsx)', '<button class="btn" type="button" data-act="excel-rapor">Excel Raporu İndir</button>'),
         r('TÜM VERİLERİ SİL', 'Müşteri, ziyaret, randevu ve ürün satışları silinir (fiyat listesi ve ürün kartları kalır)', '<button class="btn danger" type="button" data-act="sifirla">Tüm Verileri Sil</button>')
       ],
@@ -1082,7 +1083,7 @@
       'satis-sil': function () { if (!yonetici() || !confirm('Bu satış silinsin mi? Ürün stoğa geri eklenir.')) return; urunSatis = urunSatis.filter(function (x) { return x.id !== a.getAttribute('data-id'); }); kaydetUSat(); render(); },
       'st-filtre': function () { durum.st.filtre = a.getAttribute('data-f'); render(); }, 'csv-stok': csvStok, 'ara': qsAc, 'cikis': cikis, 'yedek': yedekEkrani,
       'fiyat-duzenle': fiyatEkrani, 'kullanicilar': kullaniciEkrani, 'sifre': function () { sifreFormu(oturum, true, kapat); },
-      'sifirla': tumVeriyiSil, 'yazdir': function () { window.print(); }, 'csv-musteri': csvMusteriler, 'excel-rapor': excelRaporu,
+      'sifirla': tumVeriyiSil, 'yedekler': yedeklerPenceresi, 'yazdir': function () { window.print(); }, 'csv-musteri': csvMusteriler, 'excel-rapor': excelRaporu,
       'csv-ziyaret': function () { csvZiyaretler(sayfaAdi()[0] === 'raporlar' ? aralikta(tumZ(), donemAraligi(durum.r.donem, durum.r.bas, durum.r.bit)) : ziyaretListesi()); },
       'tema': function () { var koyu = document.documentElement.getAttribute('data-theme') === 'dark'; ayarlar.tema = koyu ? 'light' : 'dark'; kaydetAyar(); temaUygula(); render(); },
       'ay-bolum': function () { durum.ayb = a.getAttribute('data-b'); durum.aq = ''; render(); },
@@ -1133,6 +1134,7 @@
 
   /* ---------- diyalog ---------- */
   function ac(html) {
+    modal.onclick = null;
     modal.innerHTML = html;
     if (!modal.open) modal.showModal();
     var x = modal.querySelector('.x'); if (x) x.onclick = kapat;
@@ -2258,48 +2260,96 @@
     };
     $('#y-ice').onclick = function () { $('#dosya').click(); };
   }
+  function yedekUygula(v) {
+    var arr = Array.isArray(v) ? v : v.musteriler;
+    if (!Array.isArray(arr)) throw new Error('biçim');
+    var yeni = 0, guncel = 0;
+    arr.forEach(function (m) {
+      if (!m || typeof m.ad !== 'string' || !m.ad.trim()) return;
+      m.id = typeof m.id === 'string' && m.id ? m.id : yeniId();
+      m.ziyaretler = Array.isArray(m.ziyaretler) ? m.ziyaretler : [];
+      m.ziyaretler.forEach(function (z) { if (!z.id) z.id = yeniId(); });
+      var i = db.map(function (x) { return x.id; }).indexOf(m.id);
+      if (i > -1) { db[i] = m; guncel++; } else { db.push(m); yeni++; }
+    });
+    if (Array.isArray(v.hizmetler)) {
+      v.hizmetler.forEach(function (h) {
+        if (!h || typeof h.ad !== 'string' || !h.ad.trim()) return;
+        var var_ = hizmetler.filter(function (x) { return tr(x.ad) === tr(h.ad); })[0];
+        if (var_) var_.fiyat = Math.max(0, Number(h.fiyat) || 0);
+        else hizmetler.push({ id: yeniId(), kategori: String(h.kategori || '').trim(), ad: h.ad.trim(), fiyat: Math.max(0, Number(h.fiyat) || 0) });
+      });
+      kaydetHiz();
+    }
+    var birlestir = function (kaynak, hedef) {
+      (Array.isArray(kaynak) ? kaynak : []).forEach(function (x) {
+        if (!x || typeof x !== 'object') return;
+        x.id = typeof x.id === 'string' && x.id ? x.id : yeniId();
+        var j = hedef.map(function (y) { return y.id; }).indexOf(x.id);
+        if (j > -1) hedef[j] = x; else hedef.push(x);
+      });
+    };
+    birlestir(v.randevular, randevular); birlestir(v.urunler, urunler); birlestir(v.urunSatis, urunSatis);
+    kaydetRan(); kaydetUrun(); kaydetUSat();
+    kaydet(); tazele(); kapat();
+    return yeni + ' yeni, ' + guncel + ' güncellenen müşteri aktarıldı.';
+  }
   $('#dosya').addEventListener('change', function (e) {
     var f = e.target.files[0]; e.target.value = '';
     if (!f) return;
     var r = new FileReader();
     r.onload = function () {
-      try {
-        var v = JSON.parse(r.result), arr = Array.isArray(v) ? v : v.musteriler;
-        if (!Array.isArray(arr)) throw new Error('biçim');
-        var yeni = 0, guncel = 0;
-        arr.forEach(function (m) {
-          if (!m || typeof m.ad !== 'string' || !m.ad.trim()) return;
-          m.id = typeof m.id === 'string' && m.id ? m.id : yeniId();
-          m.ziyaretler = Array.isArray(m.ziyaretler) ? m.ziyaretler : [];
-          m.ziyaretler.forEach(function (z) { if (!z.id) z.id = yeniId(); });
-          var i = db.map(function (x) { return x.id; }).indexOf(m.id);
-          if (i > -1) { db[i] = m; guncel++; } else { db.push(m); yeni++; }
-        });
-        if (Array.isArray(v.hizmetler)) {
-          v.hizmetler.forEach(function (h) {
-            if (!h || typeof h.ad !== 'string' || !h.ad.trim()) return;
-            var var_ = hizmetler.filter(function (x) { return tr(x.ad) === tr(h.ad); })[0];
-            if (var_) var_.fiyat = Math.max(0, Number(h.fiyat) || 0);
-            else hizmetler.push({ id: yeniId(), kategori: String(h.kategori || '').trim(), ad: h.ad.trim(), fiyat: Math.max(0, Number(h.fiyat) || 0) });
-          });
-          kaydetHiz();
-        }
-        var birlestir = function (kaynak, hedef) {
-          (Array.isArray(kaynak) ? kaynak : []).forEach(function (x) {
-            if (!x || typeof x !== 'object') return;
-            x.id = typeof x.id === 'string' && x.id ? x.id : yeniId();
-            var j = hedef.map(function (y) { return y.id; }).indexOf(x.id);
-            if (j > -1) hedef[j] = x; else hedef.push(x);
-          });
-        };
-        birlestir(v.randevular, randevular); birlestir(v.urunler, urunler); birlestir(v.urunSatis, urunSatis);
-        kaydetRan(); kaydetUrun(); kaydetUSat();
-        kaydet(); tazele(); kapat();
-        bildir(yeni + ' yeni, ' + guncel + ' güncellenen müşteri aktarıldı.');
-      } catch (err) { bildir('Dosya okunamadı: geçerli bir SİYA yedeği değil.'); }
+      try { bildir(yedekUygula(JSON.parse(r.result))); }
+      catch (err) { bildir('Dosya okunamadı: geçerli bir SİYA yedeği değil.'); }
     };
     r.readAsText(f);
   });
+
+  /* ---------- bulut yedekleri (gece otomatik, yönetici) ---------- */
+  function yedektenKur(v) {
+    var mm = {}, md = [];
+    var duz = function (a) { return (a || []).map(function (r) { return Object.assign({}, r.veri, { id: r.id }); }); };
+    (v.musteriler || []).forEach(function (r) { var m = Object.assign({}, r.veri, { id: r.id, ziyaretler: [] }); mm[r.id] = m; md.push(m); });
+    (v.ziyaretler || []).forEach(function (r) { var m = mm[r.musteri_id]; if (m) m.ziyaretler.push(Object.assign({}, r.veri, { id: r.id })); });
+    return { uygulama: 'siya', surum: 2, musteriler: md, hizmetler: duz(v.hizmetler), randevular: duz(v.randevular), urunler: duz(v.urunler), urunSatis: duz(v.urun_satis) };
+  }
+  function yedeklerPenceresi() {
+    if (!sb || !yonetici()) return;
+    function zaman(iso) { var d = new Date(iso); return tarihGoster(isoD(d)) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()); }
+    function ciz() {
+      ac(baslik('Bulut Yedekleri') + '<div class="m-body"><p class="hint">Her gece 00:00\'da tüm kayıtların kopyası alınır, otomatik yedekler 45 gün saklanır. <b>Geri yükle</b>, yedekteki kayıtları şimdiki verilerle birleştirir: silinmiş kayıtlar geri gelir, yedekten sonra eklenenler silinmez.</p>' +
+        '<div class="btnrow" style="margin:0 0 14px"><button class="btn primary" type="button" id="yd-al">Şimdi Yedek Al</button></div><div id="yd-liste"><p class="hint">Yükleniyor…</p></div></div>');
+      modal.onclick = ydTik;
+      $('#yd-al').onclick = function () {
+        $('#yd-al').disabled = true;
+        sb.rpc('yedek_al', { tur: 'elle' }).then(function (r) { if (r.error) throw r.error; bildir('Yedek alındı.'); ciz(); }).catch(function (er) { $('#yd-al').disabled = false; bildir('Yedek alınamadı: ' + (er.message || 'bilinmeyen hata')); });
+      };
+      sb.from('yedekler').select('id,olusturma,tur,ozet').order('olusturma', { ascending: false }).limit(60).then(function (r) {
+        if (r.error) throw r.error;
+        var l = r.data || [];
+        $('#yd-liste').innerHTML = l.length ? '<ul class="tk">' + l.map(function (y) {
+          var o = y.ozet || {};
+          return '<li><span class="tk-i"><b>' + zaman(y.olusturma) + ' <span class="rst ' + (y.tur === 'elle' ? 'new' : 'wait') + '">' + (y.tur === 'elle' ? 'ELLE' : 'OTOMATİK') + '</span></b><small>' +
+            (o.musteri || 0) + ' müşteri · ' + (o.ziyaret || 0) + ' ziyaret · ' + (o.randevu || 0) + ' randevu · ' + (o.satis || 0) + ' ürün satışı</small></span>' +
+            '<span class="tk-b"><button class="btn small" type="button" data-yi="' + y.id + '">İndir</button><button class="btn small" type="button" data-yg="' + y.id + '">Geri Yükle</button></span></li>';
+        }).join('') + '</ul>' : '<div class="bos"><div class="big">Henüz yedek yok</div>İlk otomatik yedek bu gece alınır. “Şimdi Yedek Al” ile hemen alabilirsiniz.</div>';
+      }).catch(function (er) {
+        $('#yd-liste').innerHTML = '<p class="err">' + (/relation|does not exist|42P01/i.test(er.message || '') ? 'Otomatik yedekleme henüz kurulmamış: Supabase SQL Editor\'da yedekleme.sql dosyasını çalıştırın.' : esc(er.message || 'Yedekler okunamadı.')) + '</p>';
+      });
+    }
+    function ydTik(e) {
+      var i = e.target.closest('[data-yi]'), g = e.target.closest('[data-yg]'); if (!i && !g) return;
+      var id = (i || g).getAttribute(i ? 'data-yi' : 'data-yg');
+      sb.from('yedekler').select('veri,olusturma').eq('id', id).maybeSingle().then(function (r) {
+        if (r.error || !r.data) throw (r.error || new Error('Yedek bulunamadı.'));
+        var obj = yedektenKur(r.data.veri);
+        if (i) { indir('siya-bulut-yedek-' + isoD(new Date(r.data.olusturma)) + '.json', JSON.stringify(obj, null, 2), 'application/json'); return; }
+        if (!confirm('Bu yedek (' + zaman(r.data.olusturma) + ') şimdiki verilerle birleştirilsin mi?\n\nSilinmiş kayıtlar geri gelir; aynı kayıtlar yedekteki haline döner; yedekten sonra eklenenler silinmez.')) return;
+        bildir(yedekUygula(obj));
+      }).catch(function (er) { bildir('İşlem yapılamadı: ' + (er.message || 'bilinmeyen hata')); });
+    }
+    ciz();
+  }
 
   function oturumsuz() {
     var gecis = false, bek = false;
