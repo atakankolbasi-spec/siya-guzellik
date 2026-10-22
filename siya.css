@@ -741,3 +741,17 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 .login .lbox input:-webkit-autofill{-webkit-text-fill-color:#fff7ea;box-shadow:0 0 0 40px #2a1a20 inset}
 .login .rem{display:flex;align-items:center;gap:10px;margin:14px 2px 0;font-size:12px;font-weight:700;color:#cdb998;text-transform:uppercase;letter-spacing:.04em}
 .login .lf label{display:block;margin:0 0 6px 2px;color:#d8bf93}
+/* tarayıcı otomatik doldurma: açık renkli zemin ve soluk yazıyı engelle */
+.login .lbox input{color-scheme:dark}
+.login .lbox input:-webkit-autofill,
+.login .lbox input:-webkit-autofill:hover,
+.login .lbox input:-webkit-autofill:focus,
+.login .lbox input:-webkit-autofill:active,
+.login .lbox input:autofill{
+  -webkit-text-fill-color:#fff7ea!important;caret-color:#fff7ea;
+  -webkit-box-shadow:0 0 0 1000px #2a1a20 inset,0 0 0 1px #d4a65699!important;
+  box-shadow:0 0 0 1000px #2a1a20 inset,0 0 0 1px #d4a65699!important;
+  border-radius:14px;transition:background-color 99999s ease-in-out 0s}
+.login .lbox input:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px #2a1a20 inset,0 0 0 2px #d4a656,0 0 0 6px #d4a65626!important;
+  box-shadow:0 0 0 1000px #2a1a20 inset,0 0 0 2px #d4a656,0 0 0 6px #d4a65626!important}
