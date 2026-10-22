@@ -137,12 +137,32 @@ dialog::backdrop{background:#2b1d2288;backdrop-filter:blur(3px)}
 .link.d{color:var(--bad)}
 .vform{background:#fffaf8;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
 
+/* giriş */
+.kilitli .top,.kilitli main,.kilitli .foot{display:none}
+.giris{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#2b1d22,#43292f)}
+.giris[hidden]{display:none}
+.login{width:min(400px,100%);background:#fff;border-radius:22px;padding:28px 26px;box-shadow:0 30px 80px #0006;text-align:center}
+.login .mark{margin:0 auto 10px}
+.login h2{margin:0;font:600 26px var(--serif);letter-spacing:.3em}
+.login .sub{margin:6px 0 18px;color:var(--muted);font-size:13px}
+.login label{text-align:left;margin-top:12px}
+.login .btn{width:100%;margin-top:18px;padding:12px}
+.login .hint{text-align:left}
+.hint{color:var(--muted);font-size:13px;font-weight:400;letter-spacing:0}
+.pick em{font-style:normal;opacity:.75;font-size:12px;margin-left:3px}
+.fyrow{display:grid;grid-template-columns:1fr 110px auto auto;gap:8px;align-items:center;margin-bottom:8px}
+.fyrow .tl{color:var(--muted)}
+.urow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.urow small{color:var(--muted)}
+.urow .acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 /* toast */
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--dark);color:#fff;padding:11px 20px;border-radius:999px;
   opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:calc(100vw - 32px)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:820px){
+  .fyrow{grid-template-columns:1fr 90px auto}
+  .fyrow .tl{display:none}
   .row{grid-template-columns:46px 1fr 20px;gap:12px}
   .row .c2,.row .c3,.row .c4{display:none}
   .row .who small.mob{display:block}

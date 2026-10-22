@@ -13,6 +13,8 @@
 <body>
 <a class="skip" href="#liste">&#304;&#231;eri&#287;e ge&#231;</a>
 
+<div id="giris" class="giris" hidden></div>
+
 <header class="top">
   <div class="brand">
     <span class="mark" aria-hidden="true">S</span>
@@ -22,7 +24,10 @@
     </div>
   </div>
   <div class="top-actions">
-    <button class="btn ghost" id="btn-yedek" type="button">Yedekle / Aktar</button>
+    <button class="btn ghost" id="btn-hesap" type="button" aria-label="Hesabım"></button>
+    <button class="btn ghost" id="btn-fiyat" type="button" data-yonetici hidden>Fiyat Listesi</button>
+    <button class="btn ghost" id="btn-kul" type="button" data-yonetici hidden>Kullan&#305;c&#305;lar</button>
+    <button class="btn ghost" id="btn-yedek" type="button" data-yonetici hidden>Yedekle / Aktar</button>
     <button class="btn primary" id="btn-yeni" type="button">+ Yeni M&#252;&#351;teri</button>
   </div>
 </header>
